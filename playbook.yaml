@@ -1,0 +1,36 @@
+- name: Install Outline Server
+  hosts: all
+
+  vars:
+    go_version: "1.22.4"
+    go_url: "https://golang.org/dl/go{{ go_version }}.linux-amd64.tar.gz"
+    outline_repo: "https://github.com/Jigsaw-Code/outline-server.git"
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+    - name: Install required packages
+      apt:
+        name:
+          - build-essential
+          - curl
+          - git
+          - wget
+        state: present
+
+    - name: Run outline installation script
+      shell: |
+        yes | bash -c \
+        "$(wget -qO- https://raw.githubusercontent.com/Jigsaw-Code/outline-apps/master/server_manager/install_scripts/install_server.sh)" \
+        install_server.sh \
+        --hostname={{ ansible_default_ipv4.address }} \
+        --keys-port=443 \ 
+        --api-port=80
+      register: outline
+
+    - name: Print command as loop item
+      set_fact:
+        dummy: value # Just to make some task without output
+      with_items:
+        - "{{ outline.stdout }}"
